@@ -1,11 +1,11 @@
 namespace helium_editor;
-class FileLoader
+class FileManager
 {
     public string Load(string path, string name)
     {
         if(!File.Exists(path))
         {
-            StreamWriter file = File.CreateText(path);
+            StreamWriter file = new StreamWriter(path);
             file.Close();
         }
 
@@ -16,5 +16,13 @@ class FileLoader
         File.SetAttributes(tempFilePath, FileAttributes.Hidden);
 
         return tempFilePath;
+    }
+
+    //Remake to only write the modified lines.
+    public void Save(List<string> content, string path)
+    {
+        StreamWriter file = new StreamWriter(path);
+        foreach(string line in content) {file.WriteLine(line);}
+        file.Close();
     }
 }

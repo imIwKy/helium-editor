@@ -1,35 +1,24 @@
-﻿namespace helium_editor;
+namespace helium_editor;
 class Editor
 {
-    private static FileLoader? loader;
-    //private static FileSaver saver;
-    private static string? filePath;
-    private static string? tempFilePath;
+    private List<string> page = new List<string>();
 
-    static void Main(string[] args)
+    public void DisplayContent(string path)
     {
-        if(args.Length == 0)
+        StreamReader file = new StreamReader(path);
+
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.White;
+
+        string? line = file.ReadLine();
+
+        while(line != null)
         {
-            Console.WriteLine("No file was provided exiting...");
-            Environment.Exit(160);
+            page.Add(line);
+            Console.WriteLine(line);
+            line = file.ReadLine();
         }
 
-        loader = new FileLoader();
-        //saver = new FileSaver();
-
-        filePath = args[0];
-        {
-            string fileName = Path.GetFileName(filePath);
-
-            if(fileName.Length == 0)
-            {
-                Console.WriteLine("Invalid path exiting...");
-                Environment.Exit(160);
-            }
-
-           tempFilePath = loader.Load(filePath, fileName);
-        }
-        
-        File.Delete(tempFilePath);
+        file.Close();
     }
 }
