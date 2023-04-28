@@ -19,6 +19,21 @@ class Editor
             line = file.ReadLine();
         }
 
+        AddFooter();
         file.Close();
+    }
+
+    private void AddFooter()
+    {
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.SetCursorPosition(0, Console.WindowHeight - 1);
+        Console.WriteLine(new string(' ', Console.WindowWidth));
+        Console.ResetColor();
+        Console.SetCursorPosition(0,0);
+    }
+
+    public void Edit(string path)
+    {
+        
     }
 }

@@ -31,6 +31,7 @@ class Program
         }
 
         editor.DisplayContent(tempFilePath);
+        editor.Edit(tempFilePath);
         File.Delete(tempFilePath);
     }
 }
