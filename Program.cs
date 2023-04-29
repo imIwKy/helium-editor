@@ -15,21 +15,17 @@ class Program
         }
 
         fileManager = new FileManager();
-        editor = new Editor();
-
         filePath = args[0];
-        {
-            string fileName = Path.GetFileName(filePath);
+        string fileName = Path.GetFileName(filePath);
 
-            if(fileName.Length == 0)
-            {
+        if(fileName.Length == 0)
+        {
                 Console.WriteLine("Invalid path exiting...");
                 Environment.Exit(160);
-            }
-
-           tempFilePath = fileManager.Load(filePath, fileName);
         }
 
+        tempFilePath = fileManager.Load(filePath, fileName);
+        editor = new Editor(filePath);
         editor.DisplayContent(tempFilePath);
         editor.Edit(tempFilePath);
         File.Delete(tempFilePath);
