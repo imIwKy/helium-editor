@@ -86,7 +86,7 @@ class Editor
 
     private void MoveCursor(ConsoleKey key)
     {
-        (int cursorY, int cursorX) = Console.GetCursorPosition();
+        (int cursorX, int cursorY) = Console.GetCursorPosition();
 
         switch(key)
         {
@@ -113,6 +113,24 @@ class Editor
                 else if(cursorX < page[cursorY].Length)
                 {
                     cursorX += 1;
+                    Console.SetCursorPosition(cursorX, cursorY);
+                }
+                break;
+            case ConsoleKey.DownArrow:
+                if(cursorY == page.Count - 1) {break;}
+                else
+                {
+                    cursorY += 1; 
+                    cursorX = page[cursorY].Length; 
+                    Console.SetCursorPosition(cursorX, cursorY);
+                }
+                break;
+            case ConsoleKey.UpArrow:
+                if(cursorY == 0) {break;}
+                else
+                {
+                    cursorY -= 1;
+                    cursorX = page[cursorY].Length;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
                 break;
