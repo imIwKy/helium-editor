@@ -20,11 +20,12 @@ class Program
 
         if(fileName.Length == 0)
         {
-                Console.WriteLine("Invalid path exiting...");
-                Environment.Exit(160);
+            Console.WriteLine("Invalid path exiting...");
+            Environment.Exit(160);
         }
 
         tempFilePath = fileManager.Load(filePath, fileName);
+        fileManager = null;
         editor = new Editor(filePath);
         editor.DisplayContent(tempFilePath);
         editor.Edit(tempFilePath);

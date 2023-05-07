@@ -12,6 +12,9 @@ class FileManager
         string tempFileName = $"~{name}";
         string tempFilePath = Path.Combine(Path.GetDirectoryName(path) ?? "", tempFileName);
 
+        //Delete the temporary file so it doesnt cause an exception if its there from a previous crash.
+        if(File.Exists(tempFilePath)) {File.Delete(tempFilePath);}
+
         File.Copy(path, tempFilePath);
         File.SetAttributes(tempFilePath, FileAttributes.Hidden);
 

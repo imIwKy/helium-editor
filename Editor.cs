@@ -1,12 +1,39 @@
+using System.Text.RegularExpressions;
+
 namespace helium_editor;
+
 class Editor
 {
     private List<string> page = new List<string>();
     private string filePath;
+    private Regex allowedCharacters = new Regex(@"^[a-zA-Z0-9\s!@#$%^&*()_+-=,.<>/?;:'""\[\]{}|\\]+$");
 
-    public Editor(string path)
+    public void Edit(string tempFilePath)
     {
-        filePath = path;
+        ConsoleKeyInfo keyInfo;
+
+        do
+        {
+            keyInfo = Console.ReadKey(true);
+
+            if((int)keyInfo.Key >= 37 && (int)keyInfo.Key <= 40)
+            {
+                MoveCursor(keyInfo.Key);
+                continue;
+            }
+
+            if(char.IsControl(keyInfo.KeyChar)) continue;
+
+            char input = keyInfo.KeyChar;
+            if(!allowedCharacters.IsMatch(input.ToString())) continue;
+
+            AddCharacter(input);
+
+
+        }
+        while(keyInfo.Key != ConsoleKey.Escape);
+
+        Exit();
     }
 
     public void DisplayContent(string tempFilePath)
@@ -35,26 +62,8 @@ class Editor
         Console.SetCursorPosition(0, Console.WindowHeight - 1);
         Console.WriteLine(new string(' ', Console.WindowWidth));
         Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.White;
         Console.SetCursorPosition(0,0);
-    }
-
-    public void Edit(string tempFilePath)
-    {
-        ConsoleKeyInfo keyInfo;
-
-        do
-        {
-            keyInfo = Console.ReadKey(true);
-
-            if((int)keyInfo.Key >= 37 && (int)keyInfo.Key <= 40)
-            {
-                MoveCursor(keyInfo.Key);
-                continue;
-            }
-        }
-        while(keyInfo.Key != ConsoleKey.Escape);
-
-        Exit();
     }
 
     private void Exit()
@@ -117,7 +126,7 @@ class Editor
                 }
                 break;
             case ConsoleKey.DownArrow:
-                if(cursorY == page.Count - 1) {break;}
+                if(cursorY == page.Count - 1) break;
                 else
                 {
                     cursorY += 1; 
@@ -126,7 +135,7 @@ class Editor
                 }
                 break;
             case ConsoleKey.UpArrow:
-                if(cursorY == 0) {break;}
+                if(cursorY == 0) break;
                 else
                 {
                     cursorY -= 1;
@@ -135,5 +144,28 @@ class Editor
                 }
                 break;
         }
+    }
+
+    private void AddCharacter(char input)
+    {
+        (int x, int y) = Console.GetCursorPosition();
+
+        if(x == page[y].Length && x < Console.WindowWidth)
+        {
+            page[y] += input;
+            Console.Write(input);
+        }
+        else if(x == Console.WindowWidth)
+        {
+            page.Insert(y, input.ToString());
+            x = 0;
+            y += 1;
+            Console.SetCursorPosition(x, y);
+        }
+    }
+
+    public Editor(string path)
+    {
+        filePath = path;
     }
 }
