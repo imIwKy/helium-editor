@@ -168,28 +168,58 @@ class Editor
 
     private void AddCharacter(char input)
     {
-        (int x, int y) = Console.GetCursorPosition();
+        (int cursorX, int cursorY) = Console.GetCursorPosition();
 
-        if(x == page[y].Length && x < Console.WindowWidth - 1)
+        //Add to the end of the string.
+        if(cursorX == page[cursorY].Length && cursorX < Console.WindowWidth - 1)
         {
-            page[y] += input;
+            page[cursorY] += input;
             Console.Write(input);
+            return;
         }
-        else if(x == Console.WindowWidth - 1)
+        //Adding to the end overflows
+        else if(cursorX >= page[cursorY].Length && cursorX == Console.WindowWidth - 1)
         {
-            y += 1;
-            int oldY = y;
+            cursorY++;
+            int oldY = cursorY;
             Console.Write(input);
-            page.Insert(y, "");
-            for(int i = y + 1; i < page.Count; i++)
-            {
-                Console.SetCursorPosition(0, i - 1);
-                Console.Write(new string(' ', page[i].Length));
-                Console.SetCursorPosition(0, i - 1);
-                Console.Write(page[i - 1]);
-            }
-
+            page.Insert(cursorY, "");
+            RedrawLines(cursorY);
             Console.SetCursorPosition(0, oldY);
+            return;
+        }
+        //Add anywhere
+        if(page[cursorY].Length < Console.WindowWidth)
+        {
+            page[cursorY] = page[cursorY].Insert(cursorX, input.ToString());
+            Console.Write(input + page[cursorY].Substring(cursorX + 1));
+            cursorX++;
+            Console.SetCursorPosition(cursorX, cursorY);
+            return;
+        }
+        //Adding anywhere overflows
+        else if(page[cursorY].Length == Console.WindowWidth)
+        {
+            page.Insert(cursorY + 1, page[cursorY].Substring(page[cursorY].Length - 1));
+            page[cursorY] = page[cursorY].Remove(page[cursorY].Length - 1);
+            page[cursorY] = page[cursorY].Insert(cursorX, input.ToString());
+            Console.Write(input + page[cursorY].Substring(cursorX + 1));
+            cursorY++;
+            int oldY = cursorY;
+            RedrawLines(cursorY);
+            Console.SetCursorPosition(0, oldY);
+        }
+
+    }
+
+    private void RedrawLines(int cursorY)
+    {
+        for(int i = cursorY + 1; i <= chunkSize; i++)
+        {
+            Console.SetCursorPosition(0, i - 1);
+            Console.Write(new string(' ', page[i].Length));
+            Console.SetCursorPosition(0, i - 1);
+            Console.Write(page[i - 1]);
         }
     }
 
