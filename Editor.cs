@@ -23,7 +23,11 @@ class Editor
                 continue;
             }
 
-            if(char.IsControl(keyInfo.KeyChar)) continue;
+            if(char.IsControl(keyInfo.KeyChar)) 
+            {
+                HandleSpecialCharacters(keyInfo.Key);
+                continue;
+            }
 
             char input = keyInfo.KeyChar;
             if(!allowedCharacters.IsMatch(input.ToString())) continue;
@@ -39,6 +43,7 @@ class Editor
 
     public void DisplayContent(string tempFilePath)
     {
+        chunkSize = Console.WindowHeight;
         StreamReader file = new StreamReader(tempFilePath);
 
         Console.Clear();
@@ -105,12 +110,12 @@ class Editor
                     else
                     cursorX = page[cursorY - 1].Length;
 
-                    cursorY -= 1;
+                    cursorY--;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
                 else if(cursorX > 0)
                 {
-                    cursorX -= 1;
+                    cursorX--;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
                 break;
@@ -118,12 +123,12 @@ class Editor
                 if(cursorX == page[cursorY].Length && cursorY < page.Count - 1 || cursorX == Console.WindowWidth - 1)
                 {
                     cursorX = 0;
-                    cursorY += 1;
+                    cursorY++;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
                 else if(cursorX < page[cursorY].Length)
                 {
-                    cursorX += 1;
+                    cursorX++;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
                 break;
@@ -131,7 +136,7 @@ class Editor
                 if(cursorY == page.Count - 1) break;
                 else if(cursorY >= Console.WindowHeight - 1)
                 {
-                    cursorY += 1;
+                    cursorY++;
                     cursorX = 0;
                     Console.SetCursorPosition(cursorX, cursorY);
                     Console.Write(page[cursorY]);
@@ -139,12 +144,12 @@ class Editor
                 }
                 else
                 {
-                    cursorY += 1; 
+                    cursorY++; 
 
                     if(page[cursorY].Length == Console.WindowWidth)
-                    cursorX = Console.WindowWidth - 1;
+                    {cursorX = Console.WindowWidth - 1;}
                     else
-                    cursorX = page[cursorY].Length;
+                    {cursorX = page[cursorY].Length;}
 
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
@@ -153,12 +158,12 @@ class Editor
                 if(cursorY == 0) break;
                 else
                 {
-                    cursorY -= 1;
+                    cursorY--;
 
                     if(page[cursorY].Length == Console.WindowWidth)
-                    cursorX = Console.WindowWidth - 1;
+                    {cursorX = Console.WindowWidth - 1;}
                     else
-                    cursorX = page[cursorY].Length;
+                    {cursorX = page[cursorY].Length;}
 
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
@@ -214,18 +219,57 @@ class Editor
 
     private void RedrawLines(int cursorY)
     {
+        chunkSize = Console.WindowHeight;
+
         for(int i = cursorY + 1; i <= chunkSize; i++)
         {
             Console.SetCursorPosition(0, i - 1);
-            Console.Write(new string(' ', page[i].Length));
+            
+            if(i >= page.Count)
+            {
+                Console.Write(' ');
+                continue;
+            }
+            else
+            {Console.Write(new string(' ', page[i].Length));}
+
             Console.SetCursorPosition(0, i - 1);
             Console.Write(page[i - 1]);
         }
     }
 
-    public Editor(string path, int size)
+    private void HandleSpecialCharacters(ConsoleKey key)
+    {
+        (int cursorX, int cursorY) = Console.GetCursorPosition();
+
+        switch(key)
+        {
+            case ConsoleKey.Enter:
+                Console.Write(new string(' ', page[cursorY].Substring(cursorX).Length));
+                page.Insert(cursorY + 1, page[cursorY].Substring(cursorX));
+                page[cursorY] = page[cursorY].Remove(cursorX);
+                cursorY++;
+                int oldY = cursorY;
+                RedrawLines(cursorY);
+                Console.SetCursorPosition(0, oldY);
+                break;
+            case ConsoleKey.Backspace:
+                if(cursorX == 0 && cursorY == 0) break;
+                else if(cursorX > 0)
+                {
+                    cursorX--;
+                    Console.SetCursorPosition(cursorX, cursorY);
+                    page[cursorY] = page[cursorY].Remove(cursorX, 1);
+                    Console.Write(page[cursorY].Substring(cursorX));
+                    Console.Write(' ');
+                    Console.SetCursorPosition(cursorX, cursorY);
+                }
+                break;
+        }
+    }
+
+    public Editor(string path)
     {
         filePath = path;
-        chunkSize = size;
     }
 }

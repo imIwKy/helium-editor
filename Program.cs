@@ -26,7 +26,7 @@ class Program
 
         tempFilePath = fileManager.Load(filePath, fileName);
         fileManager = null;
-        editor = new Editor(filePath, Console.WindowHeight);
+        editor = new Editor(filePath);
         editor.DisplayContent(tempFilePath);
         editor.Edit(tempFilePath);
         File.Delete(tempFilePath);
