@@ -8,6 +8,9 @@ class Editor
     private string filePath;
     private Regex allowedCharacters = new Regex(@"^[a-zA-Z0-9\s!@#$%^&*()_+-=,.<>/?;:'""\[\]{}|\\]+$");
     private int chunkSize;
+    private const int TAB_LENGTH = 4;
+    private const int FIRST_ARROW_KEY = 37;
+    private const int LAST_ARROW_KEY = 40;
 
     public void Edit(string tempFilePath)
     {
@@ -17,7 +20,7 @@ class Editor
         {
             keyInfo = Console.ReadKey(true);
 
-            if((int)keyInfo.Key >= 37 && (int)keyInfo.Key <= 40)
+            if((int)keyInfo.Key >= FIRST_ARROW_KEY && (int)keyInfo.Key <= LAST_ARROW_KEY)
             {
                 MoveCursor(keyInfo.Key);
                 continue;
@@ -253,16 +256,37 @@ class Editor
                 RedrawLines(cursorY);
                 Console.SetCursorPosition(0, oldY);
                 break;
-            case ConsoleKey.Backspace:
-                if(cursorX == 0 && cursorY == 0) break;
-                else if(cursorX > 0)
+            case ConsoleKey.Tab:
+                if(page[cursorY].Length + TAB_LENGTH > Console.WindowWidth)
                 {
-                    cursorX--;
-                    Console.SetCursorPosition(cursorX, cursorY);
-                    page[cursorY] = page[cursorY].Remove(cursorX, 1);
+                    page[cursorY] = page[cursorY].Insert(cursorX, new string(' ', TAB_LENGTH));
+                    int overflownCharacters = page[cursorY].Length - Console.WindowWidth;
+                    int index = page[cursorY].Length - overflownCharacters;
+                    page[cursorY + 1] = page[cursorY + 1].Insert(0, page[cursorY].Substring(index));
+                    page[cursorY] = page[cursorY].Remove(index);
+                    int oldX = cursorX;
                     Console.Write(page[cursorY].Substring(cursorX));
-                    Console.Write(' ');
-                    Console.SetCursorPosition(cursorX, cursorY);
+                    oldY = cursorY;
+                    RedrawLines(cursorY);
+
+                    if(oldX + TAB_LENGTH >= Console.WindowWidth) 
+                    {
+                        oldX = oldX + TAB_LENGTH - Console.WindowWidth;
+                        oldY++;
+                    }
+                    else {oldX += TAB_LENGTH;}
+
+                    Console.SetCursorPosition(oldX, oldY);
+
+                }
+                else
+                {
+                    page[cursorY] = page[cursorY].Insert(cursorX, new string(' ', TAB_LENGTH));
+                    int oldX = cursorX;
+                    Console.Write(page[cursorY].Substring(cursorX));
+                    oldX += TAB_LENGTH;
+                    cursorX += TAB_LENGTH;
+                    Console.SetCursorPosition(oldX, cursorY);
                 }
                 break;
         }
