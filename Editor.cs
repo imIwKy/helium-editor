@@ -2,20 +2,25 @@ using System.Text.RegularExpressions;
 
 namespace helium_editor;
 
+enum LineFlags
+{
+    Normal,
+    Modified,
+    Wrapped
+}
+
 class Editor
 {
-    private List<string> page = new List<string>();
-    private string filePath;
+    private List<string> fileContent = new List<string>();
+    private List<LineFlags> lineFlags = new List<LineFlags>();
     private Regex allowedCharacters = new Regex(@"^[a-zA-Z0-9\s!@#$%^&*()_+-=,.<>/?;:'""\[\]{}|\\]+$");
-    private int chunkSize;
     private const int TAB_LENGTH = 4;
     private const int FIRST_ARROW_KEY = 37;
     private const int LAST_ARROW_KEY = 40;
 
-    public void Edit(string tempFilePath)
+    private void Edit(string tempFilePath)
     {
         ConsoleKeyInfo keyInfo;
-
         do
         {
             keyInfo = Console.ReadKey(true);
@@ -28,14 +33,14 @@ class Editor
 
             if(char.IsControl(keyInfo.KeyChar)) 
             {
-                HandleSpecialCharacters(keyInfo.Key);
+                //HandleSpecialCharacters(keyInfo.Key);
                 continue;
             }
 
             char input = keyInfo.KeyChar;
             if(!allowedCharacters.IsMatch(input.ToString())) continue;
 
-            AddCharacter(input);
+            //AddCharacter(input);
 
 
         }
@@ -44,32 +49,41 @@ class Editor
         Exit();
     }
 
-    public void DisplayContent(string tempFilePath)
+    private void CheckTextWrapping()
     {
-        chunkSize = Console.WindowHeight;
-        StreamReader file = new StreamReader(tempFilePath);
+        FileManager fileManager = new FileManager();
 
-        Console.Clear();
-        Console.ForegroundColor = ConsoleColor.White;
-
-        string? line = file.ReadLine();
-        int i = 0;
-
-        while(line != null)
+        for(int i = 0; i < fileContent.Count; i++)
         {
-            page.Add(line);
-
-            if(i <= chunkSize) 
+            if(fileContent[i].Length > Console.WindowWidth)
             {
-                Console.WriteLine(line);
-                i++;
+                string overflownPart = fileContent[i].Substring(Console.WindowWidth);
+                fileContent.Insert(i + 1, overflownPart);
+                fileContent[i] = fileContent[i].Remove(Console.WindowWidth);
+                lineFlags.Insert(i + 1, LineFlags.Wrapped);
+                continue;
             }
-            
-            line = file.ReadLine();
-        }
 
-        Console.SetCursorPosition(0,0);
-        file.Close();
+            if(fileContent[i].Length < Console.WindowWidth && lineFlags[i] == LineFlags.Wrapped)
+            {
+                int combinedLength = fileContent[i].Length + fileContent[i - 1].Length;
+
+                if(combinedLength <= Console.WindowWidth)
+                {
+                    fileContent[i - 1] = fileContent[i - 1] + fileContent[i];
+                    fileContent.RemoveAt(i);
+                    lineFlags.RemoveAt(i);
+                    continue;
+                }
+                else if(combinedLength > Console.WindowWidth && fileContent[i - 1].Length < Console.WindowWidth)
+                {
+                    string avaliblePart = fileContent[i].Substring(0, Console.WindowWidth - fileContent[i - 1].Length);
+                    fileContent[i] = fileContent[i].Remove(0, Console.WindowWidth - fileContent[i - 1].Length);
+                    fileContent[i - 1] = fileContent[i - 1] + avaliblePart;
+                }
+
+            }
+        }
     }
 
     private void Exit()
@@ -84,7 +98,7 @@ class Editor
 
             if(answer == ConsoleKey.Y)
             {
-                fileManager.Save(page, filePath);
+                fileManager.Save(fileContent, Program.filePath);
                 Console.Clear();
                 break;
             }
@@ -99,21 +113,23 @@ class Editor
 
     }
 
+
     private void MoveCursor(ConsoleKey key)
     {
         (int cursorX, int cursorY) = Console.GetCursorPosition();
-
+        
         switch(key)
         {
             case ConsoleKey.LeftArrow:
                 if(cursorX == 0 && cursorY > 0)
                 {
-                    if(page[cursorY - 1].Length == Console.WindowWidth)
+                    CheckTextWrapping();
+                    cursorY--;
+
+                    if(fileContent[cursorY].Length >= Console.WindowWidth)
                     cursorX = Console.WindowWidth - 1;
                     else
-                    cursorX = page[cursorY - 1].Length;
-
-                    cursorY--;
+                    cursorX = fileContent[cursorY].Length;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
                 else if(cursorX > 0)
@@ -123,177 +139,31 @@ class Editor
                 }
                 break;
             case ConsoleKey.RightArrow:
-                if(cursorX == page[cursorY].Length && cursorY < page.Count - 1 || cursorX == Console.WindowWidth - 1)
+                if(cursorX == fileContent[cursorY].Length && cursorY < fileContent.Count - 1 || cursorX == Console.WindowWidth - 1)
                 {
+                    CheckTextWrapping();
                     cursorX = 0;
                     cursorY++;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
-                else if(cursorX < page[cursorY].Length)
+                else if(cursorX < fileContent[cursorY].Length)
                 {
                     cursorX++;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
                 break;
-            case ConsoleKey.DownArrow:
-                if(cursorY == page.Count - 1) break;
-                else if(cursorY >= Console.WindowHeight - 1)
-                {
-                    cursorY++;
-                    cursorX = 0;
-                    Console.SetCursorPosition(cursorX, cursorY);
-                    Console.Write(page[cursorY]);
-                    Console.SetCursorPosition(page[cursorY].Length, cursorY);
-                }
-                else
-                {
-                    cursorY++; 
-
-                    if(page[cursorY].Length == Console.WindowWidth)
-                    {cursorX = Console.WindowWidth - 1;}
-                    else
-                    {cursorX = page[cursorY].Length;}
-
-                    Console.SetCursorPosition(cursorX, cursorY);
-                }
-                break;
-            case ConsoleKey.UpArrow:
-                if(cursorY == 0) break;
-                else
-                {
-                    cursorY--;
-
-                    if(page[cursorY].Length == Console.WindowWidth)
-                    {cursorX = Console.WindowWidth - 1;}
-                    else
-                    {cursorX = page[cursorY].Length;}
-
-                    Console.SetCursorPosition(cursorX, cursorY);
-                }
-                break;
         }
     }
 
-    private void AddCharacter(char input)
+    public Editor()
     {
-        (int cursorX, int cursorY) = Console.GetCursorPosition();
-
-        //Add to the end of the string.
-        if(cursorX == page[cursorY].Length && cursorX < Console.WindowWidth - 1)
+        FileManager fileManager = new FileManager();
+        fileContent = fileManager.Load();
+        
+        for(int i = 0; i < fileContent.Count; i++)
         {
-            page[cursorY] += input;
-            Console.Write(input);
-            return;
+            lineFlags.Add(LineFlags.Normal);
         }
-        //Adding to the end overflows
-        else if(cursorX >= page[cursorY].Length && cursorX == Console.WindowWidth - 1)
-        {
-            cursorY++;
-            int oldY = cursorY;
-            Console.Write(input);
-            page.Insert(cursorY, "");
-            RedrawLines(cursorY);
-            Console.SetCursorPosition(0, oldY);
-            return;
-        }
-        //Add anywhere
-        if(page[cursorY].Length < Console.WindowWidth)
-        {
-            page[cursorY] = page[cursorY].Insert(cursorX, input.ToString());
-            Console.Write(input + page[cursorY].Substring(cursorX + 1));
-            cursorX++;
-            Console.SetCursorPosition(cursorX, cursorY);
-            return;
-        }
-        //Adding anywhere overflows
-        else if(page[cursorY].Length == Console.WindowWidth)
-        {
-            page.Insert(cursorY + 1, page[cursorY].Substring(page[cursorY].Length - 1));
-            page[cursorY] = page[cursorY].Remove(page[cursorY].Length - 1);
-            page[cursorY] = page[cursorY].Insert(cursorX, input.ToString());
-            Console.Write(input + page[cursorY].Substring(cursorX + 1));
-            cursorY++;
-            int oldY = cursorY;
-            RedrawLines(cursorY);
-            Console.SetCursorPosition(0, oldY);
-        }
-
-    }
-
-    private void RedrawLines(int cursorY)
-    {
-        chunkSize = Console.WindowHeight;
-
-        for(int i = cursorY + 1; i <= chunkSize; i++)
-        {
-            Console.SetCursorPosition(0, i - 1);
-            
-            if(i >= page.Count)
-            {
-                Console.Write(' ');
-                continue;
-            }
-            else
-            {Console.Write(new string(' ', page[i].Length));}
-
-            Console.SetCursorPosition(0, i - 1);
-            Console.Write(page[i - 1]);
-        }
-    }
-
-    private void HandleSpecialCharacters(ConsoleKey key)
-    {
-        (int cursorX, int cursorY) = Console.GetCursorPosition();
-
-        switch(key)
-        {
-            case ConsoleKey.Enter:
-                Console.Write(new string(' ', page[cursorY].Substring(cursorX).Length));
-                page.Insert(cursorY + 1, page[cursorY].Substring(cursorX));
-                page[cursorY] = page[cursorY].Remove(cursorX);
-                cursorY++;
-                int oldY = cursorY;
-                RedrawLines(cursorY);
-                Console.SetCursorPosition(0, oldY);
-                break;
-            case ConsoleKey.Tab:
-                if(page[cursorY].Length + TAB_LENGTH > Console.WindowWidth)
-                {
-                    page[cursorY] = page[cursorY].Insert(cursorX, new string(' ', TAB_LENGTH));
-                    int overflownCharacters = page[cursorY].Length - Console.WindowWidth;
-                    int index = page[cursorY].Length - overflownCharacters;
-                    page[cursorY + 1] = page[cursorY + 1].Insert(0, page[cursorY].Substring(index));
-                    page[cursorY] = page[cursorY].Remove(index);
-                    int oldX = cursorX;
-                    Console.Write(page[cursorY].Substring(cursorX));
-                    oldY = cursorY;
-                    RedrawLines(cursorY);
-
-                    if(oldX + TAB_LENGTH >= Console.WindowWidth) 
-                    {
-                        oldX = oldX + TAB_LENGTH - Console.WindowWidth;
-                        oldY++;
-                    }
-                    else {oldX += TAB_LENGTH;}
-
-                    Console.SetCursorPosition(oldX, oldY);
-
-                }
-                else
-                {
-                    page[cursorY] = page[cursorY].Insert(cursorX, new string(' ', TAB_LENGTH));
-                    int oldX = cursorX;
-                    Console.Write(page[cursorY].Substring(cursorX));
-                    oldX += TAB_LENGTH;
-                    cursorX += TAB_LENGTH;
-                    Console.SetCursorPosition(oldX, cursorY);
-                }
-                break;
-        }
-    }
-
-    public Editor(string path)
-    {
-        filePath = path;
+        Edit(fileManager.tempFilePath);
     }
 }

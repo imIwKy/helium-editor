@@ -1,10 +1,9 @@
 ﻿namespace helium_editor;
 class Program
 {
-    private static FileManager? fileManager;
     private static Editor? editor;
-    private static string? filePath;
-    private static string? tempFilePath;
+    public static string? filePath {get; private set;}
+    public static string? fileName {get; private set;}
 
     static void Main(string[] args)
     {
@@ -14,9 +13,8 @@ class Program
             Environment.Exit(160);
         }
 
-        fileManager = new FileManager();
         filePath = args[0];
-        string fileName = Path.GetFileName(filePath);
+        fileName = Path.GetFileName(filePath);
 
         if(fileName.Length == 0)
         {
@@ -24,11 +22,6 @@ class Program
             Environment.Exit(160);
         }
 
-        tempFilePath = fileManager.Load(filePath, fileName);
-        fileManager = null;
-        editor = new Editor(filePath);
-        editor.DisplayContent(tempFilePath);
-        editor.Edit(tempFilePath);
-        File.Delete(tempFilePath);
+        editor = new Editor();
     }
 }
