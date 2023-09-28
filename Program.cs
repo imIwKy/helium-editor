@@ -2,9 +2,6 @@
 class Program
 {
     private static Editor? editor;
-    public static string? filePath {get; private set;}
-    public static string? fileName {get; private set;}
-
     static void Main(string[] args)
     {
         if(args.Length == 0)
@@ -13,8 +10,8 @@ class Program
             Environment.Exit(160);
         }
 
-        filePath = args[0];
-        fileName = Path.GetFileName(filePath);
+        string filePath = args[0];
+        string fileName = Path.GetFileName(filePath);
 
         if(fileName.Length == 0)
         {
@@ -22,6 +19,7 @@ class Program
             Environment.Exit(160);
         }
 
-        editor = new Editor();
+        FileManager fileManager = new FileManager();
+        editor = new Editor(fileManager.Load(fileName, filePath), filePath);
     }
 }

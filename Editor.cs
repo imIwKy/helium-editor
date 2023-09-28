@@ -11,6 +11,7 @@ enum LineFlags
 
 class Editor
 {
+    private string filePath;
     private List<string> fileContent = new List<string>();
     private List<LineFlags> lineFlags = new List<LineFlags>();
     private Regex allowedCharacters = new Regex(@"^[a-zA-Z0-9\s!@#$%^&*()_+-=,.<>/?;:'""\[\]{}|\\]+$");
@@ -18,7 +19,7 @@ class Editor
     private const int FIRST_ARROW_KEY = 37;
     private const int LAST_ARROW_KEY = 40;
 
-    private void Edit(string tempFilePath)
+    private void Edit()
     {
         ConsoleKeyInfo keyInfo;
         do
@@ -49,43 +50,6 @@ class Editor
         Exit();
     }
 
-    private void CheckTextWrapping()
-    {
-        FileManager fileManager = new FileManager();
-
-        for(int i = 0; i < fileContent.Count; i++)
-        {
-            if(fileContent[i].Length > Console.WindowWidth)
-            {
-                string overflownPart = fileContent[i].Substring(Console.WindowWidth);
-                fileContent.Insert(i + 1, overflownPart);
-                fileContent[i] = fileContent[i].Remove(Console.WindowWidth);
-                lineFlags.Insert(i + 1, LineFlags.Wrapped);
-                continue;
-            }
-
-            if(fileContent[i].Length < Console.WindowWidth && lineFlags[i] == LineFlags.Wrapped)
-            {
-                int combinedLength = fileContent[i].Length + fileContent[i - 1].Length;
-
-                if(combinedLength <= Console.WindowWidth)
-                {
-                    fileContent[i - 1] = fileContent[i - 1] + fileContent[i];
-                    fileContent.RemoveAt(i);
-                    lineFlags.RemoveAt(i);
-                    continue;
-                }
-                else if(combinedLength > Console.WindowWidth && fileContent[i - 1].Length < Console.WindowWidth)
-                {
-                    string avaliblePart = fileContent[i].Substring(0, Console.WindowWidth - fileContent[i - 1].Length);
-                    fileContent[i] = fileContent[i].Remove(0, Console.WindowWidth - fileContent[i - 1].Length);
-                    fileContent[i - 1] = fileContent[i - 1] + avaliblePart;
-                }
-
-            }
-        }
-    }
-
     private void Exit()
     {
         FileManager fileManager = new FileManager();
@@ -98,7 +62,7 @@ class Editor
 
             if(answer == ConsoleKey.Y)
             {
-                fileManager.Save(fileContent, Program.filePath);
+                fileManager.Save(fileContent, filePath);
                 Console.Clear();
                 break;
             }
@@ -113,7 +77,6 @@ class Editor
 
     }
 
-
     private void MoveCursor(ConsoleKey key)
     {
         (int cursorX, int cursorY) = Console.GetCursorPosition();
@@ -123,7 +86,6 @@ class Editor
             case ConsoleKey.LeftArrow:
                 if(cursorX == 0 && cursorY > 0)
                 {
-                    CheckTextWrapping();
                     cursorY--;
 
                     if(fileContent[cursorY].Length >= Console.WindowWidth)
@@ -141,7 +103,6 @@ class Editor
             case ConsoleKey.RightArrow:
                 if(cursorX == fileContent[cursorY].Length && cursorY < fileContent.Count - 1 || cursorX == Console.WindowWidth - 1)
                 {
-                    CheckTextWrapping();
                     cursorX = 0;
                     cursorY++;
                     Console.SetCursorPosition(cursorX, cursorY);
@@ -155,15 +116,38 @@ class Editor
         }
     }
 
-    public Editor()
+    private void DisplayContent()
     {
-        FileManager fileManager = new FileManager();
-        fileContent = fileManager.Load();
-        
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.White;
+
         for(int i = 0; i < fileContent.Count; i++)
         {
+            if(fileContent[i].Length > Console.WindowWidth)
+            {
+                string basePart = fileContent[i].Substring(0, Console.WindowWidth);
+                string overflownPart = fileContent[i].Substring(Console.WindowWidth);
+                fileContent[i] = basePart;
+                fileContent.Insert(i + 1, overflownPart);
+                lineFlags.Add(LineFlags.Normal);
+                lineFlags.Add(LineFlags.Wrapped);
+                Console.WriteLine(basePart);
+                Console.SetCursorPosition(Console.GetCursorPosition().Left, Console.GetCursorPosition().Top - 1);
+                continue;
+            }
+
+            Console.WriteLine(fileContent[i]);
             lineFlags.Add(LineFlags.Normal);
         }
-        Edit(fileManager.tempFilePath);
+
+        Console.SetCursorPosition(0,0);
+    }
+
+    public Editor(List<string> content, string path)
+    {
+        filePath = path;
+        fileContent = content;
+        DisplayContent();
+        Edit();
     }
 }

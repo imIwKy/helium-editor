@@ -1,43 +1,33 @@
 namespace helium_editor;
 class FileManager
 {
-    public string tempFilePath {get; private set;}
-
-    public FileManager()
+    public List<string> Load(string name, string path)
     {
-        if(!File.Exists(Program.filePath))
+
+        if(!File.Exists(path))
         {
-            StreamWriter file = new StreamWriter(Program.filePath);
-            file.Close();
+            StreamWriter writer = new StreamWriter(path);
+            writer.Close();
         }
 
-        string tempFileName = $"~{Program.fileName}";
-        string tempFilePath = Path.Combine(Path.GetDirectoryName(Program.filePath) ?? "", tempFileName);
+        string tempFileName = $"~{name}";
+        string tempFilePath = Path.Combine(Path.GetDirectoryName(path) ?? "", tempFileName);
 
         if(File.Exists(tempFilePath)) {File.Delete(tempFilePath);}
 
-        File.Copy(Program.filePath, tempFilePath);
+        File.Copy(path, tempFilePath);
         File.SetAttributes(tempFilePath, FileAttributes.Hidden);
-        this.tempFilePath = tempFilePath;
-    }
-
-    public List<string> Load()
-    {
-        StreamReader file = new StreamReader(tempFilePath);
-        string? line = file.ReadLine();
+        StreamReader reader = new StreamReader(tempFilePath);
+        string? line = reader.ReadLine();
         List<string> fileContent = new List<string>();
-        Console.Clear();
-        Console.ForegroundColor = ConsoleColor.White;
 
         while(line != null)
         {
             fileContent.Add(line);
-            Console.WriteLine(line);
-            line = file.ReadLine();
+            line = reader.ReadLine();
         }
 
-        Console.SetCursorPosition(0,0);
-        file.Close();
+        reader.Close();
         return fileContent;
     }
 
