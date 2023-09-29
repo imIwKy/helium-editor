@@ -24,6 +24,8 @@ class Editor
         ConsoleKeyInfo keyInfo;
         do
         {
+            CheckTextWrapping();
+
             keyInfo = Console.ReadKey(true);
 
             if((int)keyInfo.Key >= FIRST_ARROW_KEY && (int)keyInfo.Key <= LAST_ARROW_KEY)
@@ -125,13 +127,8 @@ class Editor
         {
             if(fileContent[i].Length > Console.WindowWidth)
             {
-                string basePart = fileContent[i].Substring(0, Console.WindowWidth);
-                string overflownPart = fileContent[i].Substring(Console.WindowWidth);
-                fileContent[i] = basePart;
-                fileContent.Insert(i + 1, overflownPart);
-                lineFlags.Add(LineFlags.Normal);
-                lineFlags.Add(LineFlags.Wrapped);
-                Console.WriteLine(basePart);
+                WrapText(i);
+                Console.WriteLine(fileContent[i].Substring(0, Console.WindowWidth));
                 Console.SetCursorPosition(Console.GetCursorPosition().Left, Console.GetCursorPosition().Top - 1);
                 continue;
             }
@@ -141,6 +138,48 @@ class Editor
         }
 
         Console.SetCursorPosition(0,0);
+    }
+
+    private void CheckTextWrapping()
+    {
+        for (int i = 0; i < fileContent.Count; i++)
+        {
+            if(fileContent[i].Length > Console.WindowWidth)
+            {
+                WrapText(i);
+            }
+            else if(lineFlags[i] == LineFlags.Wrapped && fileContent[i - 1].Length < Console.WindowWidth)
+            {
+                UnwrapText(i);
+            }
+        }
+    }
+
+    private void WrapText(int lineIndex)
+    {
+        string basePart = fileContent[lineIndex].Substring(0, Console.WindowWidth);
+        string overflownPart = fileContent[lineIndex].Substring(Console.WindowWidth);
+        fileContent[lineIndex] = basePart;
+        fileContent.Insert(lineIndex + 1, overflownPart);
+        lineFlags.Add(LineFlags.Normal);
+        lineFlags.Add(LineFlags.Wrapped);
+    }
+
+    private void UnwrapText(int lineIndex)
+    {
+        if(fileContent[lineIndex - 1].Length + fileContent[lineIndex].Length <= Console.WindowWidth)
+        {
+            fileContent[lineIndex - 1] += fileContent[lineIndex];
+            fileContent.RemoveAt(lineIndex);
+            lineFlags.RemoveAt(lineIndex);
+            //RedrawLines();
+        }
+        else
+        {
+            string partToWrapBack = fileContent[lineIndex].Substring(0, Console.WindowWidth - fileContent[lineIndex - 1].Length);
+            fileContent[lineIndex - 1] += partToWrapBack;
+            fileContent[lineIndex] = fileContent[lineIndex].Remove(0, partToWrapBack.Length); 
+        }
     }
 
     public Editor(List<string> content, string path)
