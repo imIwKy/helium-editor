@@ -167,12 +167,18 @@ class Editor
 
     private void UnwrapText(int lineIndex)
     {
-        if(fileContent[lineIndex - 1].Length + fileContent[lineIndex].Length <= Console.WindowWidth)
+        if(fileContent[lineIndex - 1].Length + fileContent[lineIndex].Length < Console.WindowWidth)
         {
             fileContent[lineIndex - 1] += fileContent[lineIndex];
             fileContent.RemoveAt(lineIndex);
             lineFlags.RemoveAt(lineIndex);
-            //RedrawLines();
+        }
+        else if(fileContent[lineIndex - 1].Length + fileContent[lineIndex].Length == Console.WindowWidth)
+        {
+            fileContent[lineIndex - 1] += fileContent[lineIndex];
+            fileContent.RemoveAt(lineIndex);
+            lineFlags.RemoveAt(lineIndex);
+            RedrawLines(lineIndex);
         }
         else
         {
@@ -180,6 +186,23 @@ class Editor
             fileContent[lineIndex - 1] += partToWrapBack;
             fileContent[lineIndex] = fileContent[lineIndex].Remove(0, partToWrapBack.Length); 
         }
+    }
+
+    private void RedrawLines(int startIndex)
+    {
+        Console.ForegroundColor = ConsoleColor.White;
+        (int oldX, int oldY) = Console.GetCursorPosition();
+
+        for(int i = startIndex; i < fileContent.Count; i++)
+        {
+            Console.SetCursorPosition(0, i);
+            Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, i);
+            Console.WriteLine(fileContent[i]);
+        }
+
+        Console.Write(new string(' ', fileContent.Last().Length));
+        Console.SetCursorPosition(oldX, oldY);
     }
 
     public Editor(List<string> content, string path)
