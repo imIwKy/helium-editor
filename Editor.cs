@@ -11,11 +11,11 @@ enum LineFlags
 
 class Editor
 {
-    private string filePath;
-    private List<string> fileContent = new List<string>();
-    private List<LineFlags> lineFlags = new List<LineFlags>();
-    private Regex allowedCharacters = new Regex(@"^[a-zA-Z0-9\s!@#$%^&*()_+-=,.<>/?;:'""\[\]{}|\\]+$");
-    private const int TAB_LENGTH = 4;
+    private readonly string filePath;
+    private readonly List<string> fileContent = [];
+    private readonly List<LineFlags> lineFlags = [];
+    private readonly Regex allowedCharacters = new Regex(@"^[a-zA-Z0-9\s!@#$%^&*()_+-=,.<>/?;:'""\[\]{}|\\]+$");
+    //private const int TAB_LENGTH = 4;
     private const int FIRST_ARROW_KEY = 37;
     private const int LAST_ARROW_KEY = 40;
 
@@ -54,7 +54,6 @@ class Editor
 
     private void Exit()
     {
-        FileManager fileManager = new FileManager();
         Console.Clear();
 
         while(true)
@@ -64,7 +63,7 @@ class Editor
 
             if(answer == ConsoleKey.Y)
             {
-                fileManager.Save(fileContent, filePath);
+                FileManager.Save(fileContent, filePath);
                 Console.Clear();
                 break;
             }
@@ -112,6 +111,24 @@ class Editor
                 else if(cursorX < fileContent[cursorY].Length)
                 {
                     cursorX++;
+                    Console.SetCursorPosition(cursorX, cursorY);
+                }
+                break;
+            case ConsoleKey.DownArrow:
+                if(cursorY == fileContent.Count - 1) {break;}
+                else
+                {
+                    cursorY += 1; 
+                    cursorX = fileContent[cursorY].Length; 
+                    Console.SetCursorPosition(cursorX, cursorY);
+                }
+                break;
+            case ConsoleKey.UpArrow:
+                if(cursorY == 0) {break;}
+                else
+                {
+                    cursorY -= 1;
+                    cursorX = fileContent[cursorY].Length;
                     Console.SetCursorPosition(cursorX, cursorY);
                 }
                 break;

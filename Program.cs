@@ -19,7 +19,6 @@ class Program
             Environment.Exit(160);
         }
 
-        FileManager fileManager = new FileManager();
-        editor = new Editor(fileManager.Load(fileName, filePath), filePath);
+        editor = new Editor(FileManager.Load(fileName, filePath), filePath);
     }
 }
