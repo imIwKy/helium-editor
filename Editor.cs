@@ -125,11 +125,21 @@ class Editor
 
         for(int i = 0; i < fileContent.Count; i++)
         {
-            if(fileContent[i].Length > Console.WindowWidth)
+            if(fileContent[i].Length == Console.WindowWidth)
+            {
+                Console.Write(fileContent[i]);
+                continue;
+            }
+            else if(fileContent[i].Length > Console.WindowWidth)
             {
                 WrapText(i);
                 Console.WriteLine(fileContent[i].Substring(0, Console.WindowWidth));
                 Console.SetCursorPosition(Console.GetCursorPosition().Left, Console.GetCursorPosition().Top - 1);
+                continue;
+            }
+            else if(fileContent[i].Length == Console.WindowWidth && lineFlags[i] == LineFlags.Wrapped)
+            {
+                UnwrapText(i);
                 continue;
             }
 
