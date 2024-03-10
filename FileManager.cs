@@ -1,7 +1,7 @@
 namespace helium_editor;
 class FileManager
 {
-    public List<string> Load(string name, string path)
+    public static List<string> Load(string name, string path)
     {
 
         if(!File.Exists(path))
@@ -19,7 +19,7 @@ class FileManager
         File.SetAttributes(tempFilePath, FileAttributes.Hidden);
         StreamReader reader = new StreamReader(tempFilePath);
         string? line = reader.ReadLine();
-        List<string> fileContent = new List<string>();
+        List<string> fileContent = [];
 
         while(line != null)
         {
@@ -32,7 +32,7 @@ class FileManager
     }
 
     //Remake to only write the modified lines.
-    public void Save(List<string> content, string path)
+    public static void Save(List<string> content, string path)
     {
         StreamWriter file = new StreamWriter(path);
         foreach(string line in content) {file.WriteLine(line);}
