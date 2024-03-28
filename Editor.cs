@@ -15,7 +15,7 @@ class Editor
     private readonly List<string> fileContent = [];
     private readonly List<LineFlags> lineFlags = [];
     private readonly Regex allowedCharacters = new Regex(@"^[a-zA-Z0-9\s!@#$%^&*()_+-=,.<>/?;:'""\[\]{}|\\]+$");
-    //private const int TAB_LENGTH = 4;
+    private const int TAB_LENGTH = 4;
     private const int FIRST_ARROW_KEY = 37;
     private const int LAST_ARROW_KEY = 40;
 
@@ -36,23 +36,75 @@ class Editor
 
             if(char.IsControl(keyInfo.KeyChar)) 
             {
-                //HandleSpecialCharacters(keyInfo.Key);
+                AddSpecialCharacters(keyInfo.Key);
                 continue;
             }
 
             char input = keyInfo.KeyChar;
-            if(!allowedCharacters.IsMatch(input.ToString())) 
-            {
-                continue;
-            }
+
+            if(!allowedCharacters.IsMatch(input.ToString())) {continue;}
 
             AddCharacter(input.ToString());
-
-
         }
         while(keyInfo.Key != ConsoleKey.Escape);
 
         Exit();
+    }
+
+    private void AddSpecialCharacters(ConsoleKey key)
+    {
+        (int cursorX, int cursorY) = Console.GetCursorPosition();
+
+        switch(key)
+        {
+            case ConsoleKey.Enter:
+                if(cursorX == fileContent[cursorY].Length)
+                {
+                    cursorX = 0;
+                    cursorY++;
+                    fileContent.Insert(cursorY, "");
+                    lineFlags.Insert(cursorY, LineFlags.Normal);
+                    RedrawLines(cursorX, cursorY);
+                }
+                else
+                {
+                    string basePart = fileContent[cursorY][..cursorX];
+                    string newPart = fileContent[cursorY][cursorX..];
+                    fileContent[cursorY] = basePart;
+                    cursorX = 0;
+                    cursorY++;
+                    fileContent.Insert(cursorY, newPart);
+                    lineFlags.Insert(cursorY, LineFlags.Normal);
+                    RedrawLines(cursorX, cursorY);
+                }
+                break;
+            case ConsoleKey.Backspace:
+                if(cursorX == 0 && cursorY == 0) {break;}
+                else if(cursorX == 0)
+                {
+                    if(fileContent[cursorY - 1].Length == Console.WindowWidth)
+                    {cursorX = Console.WindowWidth - 1;}
+                    else 
+                    {cursorX = fileContent[cursorY - 1].Length;}
+
+                    fileContent[cursorY - 1] += fileContent[cursorY];
+                    fileContent.RemoveAt(cursorY);
+                    lineFlags.RemoveAt(cursorY);
+                    cursorY--;
+                    CheckTextWrapping(cursorX, cursorY);
+                    RedrawLines(cursorX, cursorY);
+                }
+                else
+                {
+                    cursorX--;
+                    fileContent[cursorY] = fileContent[cursorY].Remove(cursorX, 1);
+                    RedrawLines(cursorX, cursorY);
+                }
+                break;
+            case ConsoleKey.Tab:
+                for(int i = 0; i < TAB_LENGTH; i++) {AddCharacter(" ");}
+                break;
+        }
     }
 
     private void AddCharacter(string input)
@@ -123,23 +175,19 @@ class Editor
         while(true)
         {
             Console.WriteLine("Do you want to save the changes?(y/n)");
-            ConsoleKey answer = Console.ReadKey().Key;
+            ConsoleKey answer = Console.ReadKey(true).Key;
 
             if(answer == ConsoleKey.Y)
             {
                 FileManager.Save(fileContent, filePath);
-                Console.Clear();
                 break;
             }
-            else if(answer == ConsoleKey.N)
-            {
-                Console.Clear();
-                break;
-            }
+            else if(answer == ConsoleKey.N) {break;}
 
             Console.Clear();
         }
-
+        
+        Console.Clear();
     }
 
     private void MoveCursor(ConsoleKey key)
@@ -236,7 +284,7 @@ class Editor
             else if(fileContent[i].Length > Console.WindowWidth)
             {
                 WrapText(i);
-                Console.WriteLine(fileContent[i].Substring(0, Console.WindowWidth));
+                Console.WriteLine(fileContent[i][..Console.WindowWidth]);
                 Console.SetCursorPosition(Console.GetCursorPosition().Left, Console.GetCursorPosition().Top - 1);
                 continue;
             }
@@ -267,8 +315,8 @@ class Editor
 
     private void WrapText(int lineIndex)
     {
-        string basePart = fileContent[lineIndex].Substring(0, Console.WindowWidth);
-        string overflownPart = fileContent[lineIndex].Substring(Console.WindowWidth);
+        string basePart = fileContent[lineIndex][..Console.WindowWidth];
+        string overflownPart = fileContent[lineIndex][Console.WindowWidth..];
         fileContent[lineIndex] = basePart;
         lineIndex++;
         fileContent.Insert(lineIndex, overflownPart);

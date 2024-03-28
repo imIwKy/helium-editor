@@ -6,18 +6,17 @@ class FileManager
 
         if(!File.Exists(path))
         {
-            StreamWriter writer = new StreamWriter(path);
+            StreamWriter writer = new(path);
             writer.Close();
         }
 
-        string tempFileName = $"~{name}";
-        string tempFilePath = Path.Combine(Path.GetDirectoryName(path) ?? "", tempFileName);
+        string tempFilePath = Path.Combine(Path.GetDirectoryName(path) ?? "", $"~{name}");
 
         if(File.Exists(tempFilePath)) {File.Delete(tempFilePath);}
 
         File.Copy(path, tempFilePath);
         File.SetAttributes(tempFilePath, FileAttributes.Hidden);
-        StreamReader reader = new StreamReader(tempFilePath);
+        StreamReader reader = new(tempFilePath);
         string? line = reader.ReadLine();
         List<string> fileContent = [];
 
@@ -34,7 +33,7 @@ class FileManager
     //Remake to only write the modified lines.
     public static void Save(List<string> content, string path)
     {
-        StreamWriter file = new StreamWriter(path);
+        StreamWriter file = new(path);
         foreach(string line in content) {file.WriteLine(line);}
         file.Close();
     }

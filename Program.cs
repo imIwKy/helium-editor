@@ -1,7 +1,6 @@
 ﻿namespace helium_editor;
 class Program
 {
-    private static Editor? editor;
     static void Main(string[] args)
     {
         if(args.Length == 0)
@@ -19,6 +18,6 @@ class Program
             Environment.Exit(160);
         }
 
-        editor = new Editor(FileManager.Load(fileName, filePath), filePath);
+        _ = new Editor(FileManager.Load(fileName, filePath), filePath);
     }
 }
