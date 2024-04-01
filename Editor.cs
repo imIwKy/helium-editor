@@ -34,23 +34,29 @@ class Editor
                 continue;
             }
 
+            if(keyInfo.Key == ConsoleKey.V && keyInfo.Modifiers == ConsoleModifiers.Control)
+            {
+                RedrawLines(Console.GetCursorPosition().Left, Console.GetCursorPosition().Top);
+                continue;
+            }
+
             if(char.IsControl(keyInfo.KeyChar)) 
             {
                 AddSpecialCharacters(keyInfo.Key);
                 continue;
             }
 
-            char input = keyInfo.KeyChar;
 
-            if(!allowedCharacters.IsMatch(input.ToString())) {continue;}
-
-            AddCharacter(input.ToString());
+            if(allowedCharacters.IsMatch(keyInfo.KeyChar.ToString())) 
+            {
+                AddCharacter(keyInfo.KeyChar.ToString());
+                continue;
+            }
         }
         while(keyInfo.Key != ConsoleKey.Escape);
 
         Exit();
     }
-
     private void AddSpecialCharacters(ConsoleKey key)
     {
         (int cursorX, int cursorY) = Console.GetCursorPosition();
@@ -348,6 +354,7 @@ class Editor
     private void RedrawLines(int x, int y)
     {
         Console.ForegroundColor = ConsoleColor.White;
+        Console.BackgroundColor = ConsoleColor.Black;
         int oldX = x;
         int oldY = y;
 
