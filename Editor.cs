@@ -375,6 +375,12 @@ class Editor
     {
         filePath = path;
         fileContent = content;
+
+        if(fileContent.Count == 0)
+        {
+            fileContent.Add("");    
+        }
+
         DisplayContent();
         Edit();
     }
